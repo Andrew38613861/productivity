@@ -1,0 +1,135 @@
+import { useState, useEffect } from "react";
+
+export default function StudyDashboard() {
+  const [hours, setHours] = useState([2, 3, 1, 4, 2, 5, 3]);
+  const [goals, setGoals] = useState([]);
+  const [newGoal, setNewGoal] = useState("");
+
+  const [schedule, setSchedule] = useState([]);
+  const [newTask, setNewTask] = useState("");
+  const [newTime, setNewTime] = useState("");
+
+  const [timer, setTimer] = useState(0);
+  const [isRunning, setIsRunning] = useState(false);
+
+  // Timer logic
+  useEffect(() => {
+    let interval = null;
+
+    if (isRunning) {
+      interval = setInterval(() => {
+        setTimer((t) => t + 1);
+      }, 1000);
+    } else if (!isRunning && timer !== 0) {
+      clearInterval(interval);
+    }
+
+    return () => clearInterval(interval);
+  }, [isRunning, timer]);
+
+  // Simple chart drawing
+  useEffect(() => {
+    const canvas = document.getElementById("chart");
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = "#4CAF50";
+
+    const barWidth = 30;
+    const gap = 15;
+
+    for (let i = 0; i < hours.length; i++) {
+      const barHeight = hours[i] * 20;
+
+      ctx.fillRect(
+        i * (barWidth + gap),
+        canvas.height - barHeight,
+        barWidth,
+        barHeight
+      );
+    }
+  }, [hours]);
+
+  function addGoal() {
+    if (newGoal.trim() === "") return;
+    setGoals((g) => [...g, newGoal]);
+    setNewGoal("");
+  }
+
+  function addTask() {
+    if (newTask.trim() === "" || newTime.trim() === "") return;
+
+    setSchedule((s) => [
+      ...s,
+      { task: newTask, time: newTime }
+    ]);
+
+    setNewTask("");
+    setNewTime("");
+  }
+
+  function formatTime(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
+  }
+
+  return (
+    <div style={{ fontFamily: "Arial", padding: "20px" }}>
+      <h1>Study Dashboard</h1>
+
+      {/* CHART */}
+      <h2>Weekly Study Hours</h2>
+      <canvas id="chart" width="300" height="150"></canvas>
+
+      {/* GOALS */}
+      <h2>Goals</h2>
+      <input
+        value={newGoal}
+        onChange={(e) => setNewGoal(e.target.value)}
+        placeholder="Add goal"
+      />
+      <button onClick={addGoal}>Add</button>
+
+      <ul>
+        {goals.map((g, i) => (
+          <li key={i}>{g}</li>
+        ))}
+      </ul>
+
+      {/* SCHEDULE */}
+      <h2>Schedule</h2>
+      <input
+        value={newTask}
+        onChange={(e) => setNewTask(e.target.value)}
+        placeholder="Task"
+      />
+      <input
+        value={newTime}
+        onChange={(e) => setNewTime(e.target.value)}
+        placeholder="Time"
+      />
+      <button onClick={addTask}>Add Task</button>
+
+      <ul>
+        {schedule.map((item, i) => (
+          <li key={i}>
+            {item.time} - {item.task}
+          </li>
+        ))}
+      </ul>
+
+      {/* TIMER */}
+      <h2>Focus Timer</h2>
+      <div style={{ fontSize: "24px", marginBottom: "10px" }}>
+        {formatTime(timer)}
+      </div>
+
+      <button onClick={() => setIsRunning(true)}>Start</button>
+      <button onClick={() => setIsRunning(false)}>Pause</button>
+      <button onClick={() => setTimer(0)}>Reset</button>
+    </div>
+  );
+}
